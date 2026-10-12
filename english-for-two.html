@@ -1,0 +1,731 @@
+<title>English for Two</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Rubik:wght@400;500;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap">
+<style>
+/* Layout: one narrow app column; a sticky scoreboard on top, the active mode below. Hebrew UI, English content set apart in a serif. */
+:root{
+  --bg:#EEF1F7; --surface:#FFFFFF; --sunk:#E3E8F2; --ink:#18213D; --muted:#5B6584; --line:#CDD4E4;
+  --accent:#F2622E; --accent-ink:#FFFFFF; --teal:#0F7C7A; --gold:#E9A800; --good:#1E8A4C; --bad:#C2372B;
+  --ins:#D8F1E1; --del:#FAD9D4;
+  --f-display:"Secular One","Rubik",system-ui,sans-serif;
+  --f-body:"Rubik",system-ui,"Segoe UI",Arial,sans-serif;
+  --f-en:"Literata",Georgia,"Times New Roman",serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1426; --surface:#182039; --sunk:#111A30; --ink:#E9ECF6; --muted:#9AA3C0; --line:#2A3556;
+  --accent:#FF7A4A; --accent-ink:#1A0E08; --teal:#3DBDB9; --gold:#FFC93C; --good:#4CC584; --bad:#FF7A6E;
+  --ins:#173D2A; --del:#4A1F1C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1426; --surface:#182039; --sunk:#111A30; --ink:#E9ECF6; --muted:#9AA3C0; --line:#2A3556;
+  --accent:#FF7A4A; --accent-ink:#1A0E08; --teal:#3DBDB9; --gold:#FFC93C; --good:#4CC584; --bad:#FF7A6E;
+  --ins:#173D2A; --del:#4A1F1C; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55}
+.app{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:0 48px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance;line-height:1.2}
+h2{font-size:1.6rem} h3{font-size:1.2rem}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.en{direction:ltr;text-align:left;font-family:var(--f-en);unicode-bidi:isolate}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stack{display:flex;flex-direction:column;gap:14px}
+.spacer{flex:1}
+
+/* Top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 10px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.brand{font-family:var(--f-display);font-size:1.35rem;background:none;border:0;padding:0;display:flex;align-items:center;gap:8px}
+.brand .two{background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:0 7px;font-size:1rem}
+.players{display:flex;gap:6px;background:var(--sunk);border-radius:999px;padding:4px}
+.pchip{border:0;background:transparent;border-radius:999px;padding:5px 12px;display:flex;align-items:center;gap:6px;font-size:.92rem;color:var(--muted)}
+.pchip[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgb(0 0 0 / .12)}
+.dot{width:10px;height:10px;border-radius:50%}
+.p1c{background:var(--accent)} .p2c{background:var(--teal)}
+.xpline{display:flex;gap:12px;align-items:center;margin-top:10px;font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{flex:1;height:8px;background:var(--sunk);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--gold);border-radius:99px;transition:width .5s}
+.streak b{color:var(--accent)}
+
+/* Buttons */
+.btn{border:0;border-radius:12px;padding:10px 18px;background:var(--accent);color:var(--accent-ink);font-weight:500;display:inline-flex;gap:8px;align-items:center;justify-content:center}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.teal{background:var(--teal);color:#fff}
+.btn.sm{padding:6px 12px;font-size:.88rem;border-radius:10px}
+.icon{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);display:inline-grid;place-items:center;padding:0;flex:none}
+.icon svg{width:18px;height:18px}
+.icon.live{background:var(--bad);border-color:var(--bad);color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px rgb(194 55 43 / .18)}}
+@media (prefers-reduced-motion:reduce){.icon.live{animation:none}.bar>i{transition:none}}
+
+/* Home */
+.hello{display:grid;gap:6px;margin-bottom:22px}
+.hello p{margin:0}
+.modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.modes{grid-template-columns:1fr}}
+.mode{border:1.5px solid var(--line);background:var(--surface);border-radius:var(--r);padding:18px;text-align:right;display:grid;gap:6px;transition:transform .15s,border-color .15s}
+.mode:hover{transform:translateY(-2px);border-color:var(--accent)}
+.mode .k{font-size:.75rem;letter-spacing:.06em;color:var(--teal);font-weight:700}
+.mode h3{font-size:1.25rem}
+.mode p{margin:0;color:var(--muted);font-size:.92rem}
+.scoreboard{margin-top:26px;background:var(--surface);border-radius:var(--r);padding:16px;border:1.5px solid var(--line)}
+.sbrow{display:grid;grid-template-columns:90px 1fr 70px;gap:10px;align-items:center;margin-top:10px;font-variant-numeric:tabular-nums}
+.sbrow .bar{height:12px}
+.sbrow .bar.p2 i{background:var(--teal)} .sbrow .bar.p1 i{background:var(--accent)}
+.mission{margin-top:14px;padding:14px 16px;border-radius:var(--r);background:var(--sunk);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+/* Cards & forms */
+.card{background:var(--surface);border:1.5px solid var(--line);border-radius:var(--r);padding:16px}
+.back{background:none;border:0;color:var(--muted);padding:0;margin-bottom:10px;font-size:.92rem}
+textarea,input[type=text],select{width:100%;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px}
+textarea{min-height:120px;resize:vertical;line-height:1.6}
+textarea.en,input.en{font-size:1.05rem}
+label.lbl{font-size:.85rem;color:var(--muted);display:block;margin-bottom:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:.9rem}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.word{display:inline-flex;gap:6px;align-items:center}
+.levels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.levels{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lvl{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:10px;text-align:right}
+.lvl b{font-family:var(--f-display);font-weight:400;font-size:1.2rem;display:block}
+.lvl span{font-size:.8rem;color:var(--muted)}
+.lvl[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+
+/* Scenario list */
+.scen{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.scen{grid-template-columns:1fr}}
+.scn{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 14px;text-align:right;display:grid;gap:2px}
+.scn:hover{border-color:var(--teal)}
+.scn .en{font-weight:600;font-size:1.02rem}
+.scn .muted{font-size:.86rem}
+.scn.surprise{border-style:dashed;border-color:var(--accent)}
+
+/* Chat */
+.chat{display:flex;flex-direction:column;gap:12px;margin-block:14px}
+.msg{max-width:88%;display:grid;gap:6px;min-width:0}
+.msg.them{align-self:flex-end}
+.msg.me{align-self:flex-start}
+.bub{border-radius:16px;padding:10px 14px;font-size:1.05rem;line-height:1.5;min-width:0;overflow-wrap:anywhere}
+.them .bub{background:var(--surface);border:1.5px solid var(--line);border-top-left-radius:4px}
+.me .bub{background:var(--ink);color:var(--bg);border-top-right-radius:4px}
+.who{font-size:.78rem;color:var(--muted)}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+.tools .icon{width:32px;height:32px}
+.tools .icon svg{width:15px;height:15px}
+.trans{font-size:.92rem;color:var(--muted);padding-inline:4px}
+.fb{border-radius:12px;padding:10px 12px;font-size:.92rem;display:grid;gap:6px;background:var(--sunk);min-width:0}
+.fb.ok{color:var(--good)}
+.fb .tag{font-size:.75rem;font-weight:700;letter-spacing:.04em}
+.fb.fix .tag{color:var(--bad)}
+ins{background:var(--ins);text-decoration:none;border-radius:4px;padding:0 2px}
+del{background:var(--del);border-radius:4px;padding:0 2px;opacity:.85}
+.composer{position:sticky;bottom:0;background:var(--bg);padding-block:10px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);display:grid;gap:8px}
+.composer textarea{min-height:56px;max-height:160px}
+.hint{font-size:.88rem;background:var(--sunk);border-radius:10px;padding:8px 12px}
+.typing{color:var(--muted);font-size:.92rem}
+
+/* Writing review */
+.scores{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:480px){.scores{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.score{background:var(--sunk);border-radius:12px;padding:10px;text-align:center}
+.score b{font-family:var(--f-display);font-weight:400;font-size:1.7rem;display:block;font-variant-numeric:tabular-nums}
+.score span{font-size:.8rem;color:var(--muted)}
+.score.main{background:var(--accent);color:var(--accent-ink)}
+.score.main span{color:inherit;opacity:.85}
+.mist{display:grid;gap:8px}
+.mist li{background:var(--sunk);border-radius:10px;padding:8px 12px;list-style:none}
+.mist ul{padding:0;margin:0;display:grid;gap:8px}
+.prose{font-size:1.05rem;line-height:1.7}
+
+/* Duel */
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;text-align:center}
+.vs .big{font-family:var(--f-display);font-size:1.6rem}
+.duelcol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.duelcol{grid-template-columns:1fr}}
+.winner{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
+
+/* Flashcards */
+.flash{min-height:220px;display:grid;place-items:center;text-align:center;gap:10px;padding:26px}
+.flash .w{font-family:var(--f-en);font-size:2rem;font-weight:600}
+.wordlist{display:grid;gap:6px;margin:0;padding:0}
+.wordlist li{list-style:none;display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;flex-wrap:wrap}
+.wordlist .en{font-weight:600}
+.box{font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
+
+.toast{position:fixed;inset-inline:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:520px;margin:0 auto;background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;z-index:20;font-size:.95rem;box-shadow:0 6px 24px rgb(0 0 0 / .25)}
+.xpfly{position:fixed;top:70px;inset-inline-start:50%;transform:translateX(50%);background:var(--gold);color:#1a1300;font-family:var(--f-display);padding:6px 14px;border-radius:999px;z-index:21;animation:fly 1.6s forwards}
+@keyframes fly{0%{opacity:0;transform:translate(50%,10px)}15%{opacity:1;transform:translate(50%,0)}80%{opacity:1}100%{opacity:0;transform:translate(50%,-20px)}}
+.note{font-size:.85rem;color:var(--muted);background:var(--sunk);border-radius:10px;padding:10px 12px}
+</style>
+
+<div class="app" id="app" dir="rtl" lang="he">
+  <header class="top">
+    <div class="row">
+      <button class="brand" id="brand" aria-label="מסך הבית"><span>English</span><span class="two">for Two</span></button>
+      <span class="spacer"></span>
+      <div class="players" id="players" role="group" aria-label="מי לומד/ת עכשיו"></div>
+    </div>
+    <div class="xpline" id="xpline"></div>
+  </header>
+  <main id="view"></main>
+</div>
+<div id="toastHost"></div>
+
+<script>
+(() => {
+const IC = {
+  speak:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+  mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  tr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M6 5c0 4 3 7 6 8M10 5c-1 4-4 7-6 8"/><path d="m13 21 4-9 4 9M14.5 18h5"/></svg>',
+  send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4 3 11l7 2 2 7z"/></svg>'
+};
+const LEVELS = [
+  {id:'A2', he:'בסיסי', d:'משפטים פשוטים'},
+  {id:'B1', he:'בינוני', d:'מסתדר/ת בשיחה'},
+  {id:'B2', he:'טוב', d:'שוטף עם טעויות'},
+  {id:'C1', he:'מתקדם', d:'רוצה ללטש'}
+];
+const INTERESTS = ['טיולים וחו"ל','אוכל ובישול','סדרות וסרטים','טכנולוגיה','ספורט','עסקים וקריירה','מוזיקה','היסטוריה','מדע וחלל','פסיכולוגיה','בית ועיצוב','חיות','משפחה וילדים','בריאות וכושר','משחקים','אופנה'];
+const SCENARIOS = [
+  {en:'Coffee in Brooklyn', he:'הזמנה בבית קפה עמוס, הבריסטה קצת חצוף', role:'a fast-talking, sarcastic but kind barista in Brooklyn'},
+  {en:'Lost luggage at Heathrow', he:'המזוודה נעלמה. שכנעו את הפקידה למצוא אותה', role:'a tired British airline desk agent at Heathrow'},
+  {en:'The Butler Did It?', he:'אתם הבלש/ית. חקרו את המשרת החשוד ברצח', role:'a nervous butler suspected of a murder at a 1920s English mansion; you hide a secret and slowly reveal clues when asked good questions'},
+  {en:'Startup job interview', he:'ראיון עבודה בחברת הייטק בלונדון', role:'a friendly but sharp hiring manager at a London tech startup'},
+  {en:'Flea market haggling', he:'התמקחו על פטיפון וינטג\' בשוק פשפשים', role:'a stubborn, funny vendor at a flea market selling a vintage record player for $120'},
+  {en:'An alien asks about Earth', he:'חייזר נחת בחצר ורוצה להבין מה זה "סושי"', role:'a curious, polite alien who just landed and misunderstands human customs in funny ways'},
+  {en:'Dinner with the neighbors', he:'ארוחת ערב עם זוג שכנים אמריקאים חדשים', role:'a chatty American neighbor from Texas hosting a dinner'},
+  {en:'Internet is down', he:'שיחה עם שירות לקוחות. האינטרנט נפל לפני ישיבה חשובה', role:'a scripted, overly cheerful customer-service agent at an internet company'}
+];
+const BOX_DAYS = [0,1,3,7,14,30,60];
+
+const app = document.getElementById('app');
+document.documentElement.lang = 'he';
+const view = document.getElementById('view');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today = () => Math.floor((Date.now() - new Date().getTimezoneOffset()*60000) / 86400000);
+const wc = s => (s.trim().match(/\S+/g) || []).length;
+
+const blank = id => ({name: id === 'p1' ? 'אני' : 'אשתי', level:'B1', interests:[], xp:0, streak:0, lastDay:0, words:[], stats:{chats:0,writes:0,duels:0,cards:0}, rate:0.95, updatedAt:0});
+const S = {players:{p1:blank('p1'), p2:blank('p2')}, cur:'p1', db:null, sample:null, view:'home', dirty:{}};
+try { const c = localStorage.getItem('e42_cur'); if (c === 'p1' || c === 'p2') S.cur = c; } catch {}
+const P = () => S.players[S.cur];
+const other = () => S.cur === 'p1' ? 'p2' : 'p1';
+
+/* ---------- persistence ---------- */
+function merge(id, data){ const b = blank(id); return Object.assign(b, data || {}, {stats:Object.assign(b.stats, (data||{}).stats||{})}); }
+function loadLocal(){ for (const id of ['p1','p2']) { try { const raw = localStorage.getItem('e42_'+id); if (raw) S.players[id] = merge(id, JSON.parse(raw)); } catch {} } }
+loadLocal();
+const writing = {}; const timers = {};
+function save(id = S.cur){
+  S.players[id].updatedAt = Date.now();
+  S.dirty[id] = true;
+  try { localStorage.setItem('e42_'+id, JSON.stringify(S.players[id])); } catch {}
+  clearTimeout(timers[id]);
+  timers[id] = setTimeout(() => flush(id), 700);
+}
+async function flush(id){
+  if (!S.db) { S.dirty[id] = false; return; }
+  if (writing[id]) { timers[id] = setTimeout(() => flush(id), 500); return; }
+  writing[id] = true;
+  try { await S.db.doc('players/'+id).set(JSON.parse(JSON.stringify(S.players[id]))); S.dirty[id] = false; }
+  catch (e) { if (e && e.code !== 'cancelled') toast('השמירה בענן נכשלה. ההתקדמות נשמרה במכשיר הזה.'); }
+  finally { writing[id] = false; }
+}
+
+/* ---------- XP & streak ---------- */
+function gain(n, why){
+  const p = P(); const d = today();
+  if (p.lastDay !== d) { p.streak = (p.lastDay === d - 1) ? p.streak + 1 : 1; p.lastDay = d; }
+  p.xp += n; save(); renderTop();
+  const f = document.createElement('div'); f.className = 'xpfly'; f.textContent = '+' + n + ' XP' + (why ? ' · ' + why : '');
+  document.body.append(f); setTimeout(() => f.remove(), 1700);
+}
+const lvlOf = xp => Math.floor(xp / 250) + 1;
+
+/* ---------- UI helpers ---------- */
+let toastT;
+function toast(msg){ const h = document.getElementById('toastHost'); h.innerHTML = '<div class="toast" role="status" dir="rtl">'+esc(msg)+'</div>'; clearTimeout(toastT); toastT = setTimeout(() => h.innerHTML = '', 4200); }
+function errText(e){
+  const c = e && e.code;
+  if (c === 'cancelled') return '';
+  if (c === 'not_granted' || c === 'not_declared') return 'צריך לאשר לדף לשאול את Claude. אפשרו את זה בתפריט ההרשאות של הדף ונסו שוב.';
+  if (c === 'rate_limited' || c === 'queue_overflow') return 'יותר מדי בקשות ברצף. חכו דקה ונסו שוב.';
+  if (c === 'invalid_json' || c === 'empty_completion') return 'התשובה הגיעה משובשת. לחצו שוב.';
+  if (c === 'session_expired') return 'פג תוקף ההתחברות. רעננו את הדף.';
+  return 'החיבור ל-Claude נכשל. נסו שוב בעוד רגע.';
+}
+async function ask(input, opts = {}){
+  if (!S.sample) throw {code:'not_granted'};
+  return S.sample.json(input, Object.assign({cache:false}, opts));
+}
+function profileLine(p){ return `Learner: ${p.name}. CEFR level: ${p.level}. Interests: ${p.interests.length ? p.interests.join(', ') + ' (these are in Hebrew; use them for topics)' : 'general'}.`; }
+
+/* speech out */
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)); } catch {} }
+if ('speechSynthesis' in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function speak(text, slow){
+  if (!('speechSynthesis' in window)) { toast('הדפדפן הזה לא תומך בהקראה.'); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  const v = voices.find(v => /en-US/i.test(v.lang) && /natural|google|samantha|aria|jenny/i.test(v.name)) || voices.find(v => /en-US/i.test(v.lang)) || voices[0];
+  if (v) u.voice = v;
+  u.rate = (P().rate || 0.95) * (slow ? 0.75 : 1);
+  speechSynthesis.speak(u);
+}
+
+/* speech in */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let micBlocked = false;
+function wireMic(btn, field, onVoice){
+  if (!SR || micBlocked) { btn.hidden = true; return; }
+  let rec = null;
+  btn.onclick = () => {
+    if (rec) { rec.stop(); return; }
+    rec = new SR(); rec.lang = 'en-US'; rec.interimResults = true; rec.continuous = true;
+    const base = field.value ? field.value.replace(/\s*$/, ' ') : '';
+    rec.onresult = e => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; field.value = base + t; onVoice && onVoice(); };
+    rec.onerror = e => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') {
+        micBlocked = true; btn.hidden = true;
+        toast('המיקרופון לא זמין בתוך הדף. בטלפון: לחצו על סמל המיקרופון במקלדת ודברו באנגלית.');
+      }
+    };
+    rec.onend = () => { rec = null; btn.classList.remove('live'); btn.setAttribute('aria-label','דברו באנגלית'); };
+    try { rec.start(); btn.classList.add('live'); btn.setAttribute('aria-label','עצירת הקלטה'); } catch { rec = null; }
+  };
+}
+
+/* word diff */
+function diff(a, b){
+  const A = a.split(/(\s+)/).filter(x => x.trim()), B = b.split(/(\s+)/).filter(x => x.trim());
+  const norm = w => w.toLowerCase().replace(/[^\w']/g,'');
+  const n = A.length, m = B.length, L = Array.from({length:n+1}, () => new Array(m+1).fill(0));
+  for (let i = n-1; i >= 0; i--) for (let j = m-1; j >= 0; j--) L[i][j] = A[i] === B[j] || (norm(A[i]) && norm(A[i]) === norm(B[j]) && A[i] === B[j]) ? L[i+1][j+1] + 1 : Math.max(L[i+1][j], L[i][j+1]);
+  const out = []; let i = 0, j = 0;
+  while (i < n && j < m) {
+    if (A[i] === B[j]) { out.push(esc(A[i])); i++; j++; }
+    else if (L[i+1][j] >= L[i][j+1]) out.push('<del>'+esc(A[i++])+'</del>');
+    else out.push('<ins>'+esc(B[j++])+'</ins>');
+  }
+  while (i < n) out.push('<del>'+esc(A[i++])+'</del>');
+  while (j < m) out.push('<ins>'+esc(B[j++])+'</ins>');
+  return out.join(' ');
+}
+
+/* words bank */
+function addWord(w){
+  const p = P(); if (!w || !w.en) return false;
+  const key = w.en.trim().toLowerCase();
+  if (p.words.some(x => x.en.toLowerCase() === key)) { toast('המילה כבר במחסן.'); return false; }
+  p.words.push({en:w.en.trim(), he:(w.he||'').trim(), ex:(w.ex||'').trim(), box:0, due:today(), added:Date.now()});
+  save(); toast('נוסף למחסן: ' + w.en); return true;
+}
+function wordChips(words){
+  if (!words || !words.length) return '';
+  return '<div class="chips">' + words.map((w,i) => `<button class="chip word" data-w="${i}" title="הוספה למחסן המילים"><span class="en">${esc(w.en)}</span><span class="muted small">${esc(w.he||'')}</span><b aria-hidden="true">+</b></button>`).join('') + '</div>';
+}
+function bindWordChips(root, words){
+  root.querySelectorAll('[data-w]').forEach(b => b.onclick = () => { if (addWord(words[+b.dataset.w])) { b.disabled = true; b.querySelector('b').textContent = '✓'; } });
+}
+
+/* ---------- top bar ---------- */
+function renderTop(){
+  const ps = document.getElementById('players');
+  ps.innerHTML = ['p1','p2'].map(id => `<button class="pchip" aria-pressed="${S.cur===id}" data-p="${id}"><span class="dot ${id}c"></span>${esc(S.players[id].name)}</button>`).join('');
+  ps.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { S.cur = b.dataset.p; try { localStorage.setItem('e42_cur', S.cur); } catch {} renderTop(); go(S.view === 'chatRoom' ? 'chat' : S.view); });
+  const p = P(), lv = lvlOf(p.xp), into = p.xp % 250;
+  const streakAlive = p.lastDay >= today() - 1;
+  document.getElementById('xpline').innerHTML = `<span>רמה <b>${lv}</b></span><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="250" aria-valuenow="${into}" aria-label="התקדמות לרמה הבאה"><i style="width:${into/2.5}%"></i></div><span>${p.xp} XP</span><span class="streak">רצף <b>${streakAlive ? p.streak : 0}</b> ימים</span>`;
+}
+document.getElementById('brand').onclick = () => go('home');
+
+/* ---------- router ---------- */
+function go(v, arg){ S.view = v; try { speechSynthesis.cancel(); } catch {} (VIEWS[v] || VIEWS.home)(arg); window.scrollTo({top:0}); }
+const backBtn = () => '<button class="back" data-back>→ חזרה לבית</button>';
+function bindBack(){ view.querySelectorAll('[data-back]').forEach(b => b.onclick = () => go('home')); }
+
+const VIEWS = {};
+
+/* HOME */
+VIEWS.home = () => {
+  const p = P(), o = S.players[other()];
+  const due = p.words.filter(w => w.due <= today()).length;
+  const max = Math.max(p.xp, o.xp, 1);
+  const missions = [
+    due ? {t:`יש ${due} מילים שמחכות לחזרה`, b:'לחזרה', v:'words'} : null,
+    !p.interests.length ? {t:'ספרו לנו מה מעניין אתכם, וכל התרגילים יתאימו את עצמם', b:'לפרופיל', v:'profile'} : null,
+    {t:'משימת היום: 5 הודעות בשיחה עם דמות, לפחות אחת בקול', b:'יאללה', v:'chat'}
+  ].filter(Boolean)[0];
+  view.innerHTML = `
+  <section class="hello">
+    <h2>היי ${esc(p.name)}, מה עושים היום?</h2>
+    <p class="muted">כל תרגיל נבנה סביב מה שמעניין אותך. הטעויות הופכות למילים במחסן, וה-XP נספר לטבלה הזוגית.</p>
+  </section>
+  <div class="modes">
+    <button class="mode" data-go="chat"><span class="k">דיבור · שיחה</span><h3>שיחה עם דמות</h3><p>בלש בחקירת רצח, בריסטה חצוף, חייזר מבולבל. מדברים או מקלידים, ומקבלים תיקון עדין אחרי כל משפט.</p></button>
+    <button class="mode" data-go="write"><span class="k">כתיבה</span><h3>סדנת כתיבה</h3><p>משימה קצרה על נושא שאתם אוהבים. ציון, תיקונים מסומנים, וגרסה משודרגת של הטקסט שלכם.</p></button>
+    <button class="mode" data-go="duel"><span class="k">ביחד · תחרות</span><h3>דו-קרב זוגי</h3><p>אתגר אחד, שתי תשובות. מעבירים את הטלפון, ו-Claude שופט מי ניצח ולמה.</p></button>
+    <button class="mode" data-go="words"><span class="k">אוצר מילים</span><h3>מחסן המילים</h3><p>${p.words.length ? `${p.words.length} מילים שאספת, ${due} לחזרה היום.` : 'כל מילה שתאספו בשיחות ובכתיבה תחכה כאן לחזרה חכמה.'}</p></button>
+  </div>
+  ${missions ? `<div class="mission"><span style="flex:1;min-width:200px">${esc(missions.t)}</span><button class="btn sm" data-go="${missions.v}">${esc(missions.b)}</button></div>` : ''}
+  <section class="scoreboard">
+    <div class="row"><h3>הטבלה הזוגית</h3><span class="spacer"></span><button class="btn ghost sm" data-go="profile">פרופיל והגדרות</button></div>
+    ${['p1','p2'].map(id => { const q = S.players[id]; return `<div class="sbrow"><span>${esc(q.name)}</span><div class="bar ${id}"><i style="width:${q.xp/max*100}%"></i></div><span class="small muted">${q.xp} XP</span></div>`; }).join('')}
+    <p class="small muted" style="margin:10px 0 0">${p.xp === o.xp ? 'שוויון. מי ישבור אותו?' : `${esc((p.xp > o.xp ? p : o).name)} מוביל/ה ב-${Math.abs(p.xp - o.xp)} XP.`}</p>
+  </section>
+  ${S.sample ? '' : '<p class="note" style="margin-top:14px">התרגילים עם Claude נטענים... אם זה לא מסתדר, פתחו את הדף מתוך claude.ai כשאתם מחוברים. מחסן המילים עובד גם בלי.</p>'}`;
+  view.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+};
+
+/* PROFILE */
+VIEWS.profile = () => {
+  const p = P();
+  view.innerHTML = `${backBtn()}
+  <div class="stack">
+    <h2>הפרופיל של ${esc(p.name)}</h2>
+    <div><label class="lbl" for="pname">שם</label><input type="text" id="pname" value="${esc(p.name)}" maxlength="20"></div>
+    <div><span class="lbl">רמת אנגלית</span><div class="levels">${LEVELS.map(l => `<button class="lvl" data-l="${l.id}" aria-pressed="${p.level===l.id}"><b>${l.id}</b>${l.he}<br><span>${l.d}</span></button>`).join('')}</div></div>
+    <div><span class="lbl">מה מעניין אותך? (כמה שרוצים)</span><div class="chips" id="ints">${[...new Set([...INTERESTS, ...p.interests])].map(t => `<button class="chip" aria-pressed="${p.interests.includes(t)}" data-i="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+      <div class="row" style="margin-top:8px"><input type="text" id="newint" placeholder="תחביב אחר? למשל: צילום, יין, קרוספיט" style="flex:1;min-width:180px"><button class="btn ghost sm" id="addint">הוספה</button></div></div>
+    <div><label class="lbl" for="rate">מהירות הקראה: <span id="rv">${p.rate}</span></label><div class="row"><input type="range" id="rate" min="0.6" max="1.2" step="0.05" value="${p.rate}" style="flex:1"><button class="icon" id="trate" aria-label="השמעת דוגמה">${IC.speak}</button></div></div>
+    <p class="note">ההתקדמות של שניכם נשמרת יחד, אז אפשר ללמוד מאותו מכשיר או כל אחד מהטלפון שלו (אם הדף שותף איתו).</p>
+  </div>`;
+  bindBack();
+  const nm = view.querySelector('#pname');
+  nm.oninput = () => { p.name = nm.value.trim() || (S.cur==='p1'?'אני':'אשתי'); save(); renderTop(); };
+  view.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { p.level = b.dataset.l; save(); view.querySelectorAll('[data-l]').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+  const bindInts = () => view.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { const t = b.dataset.i; const k = p.interests.indexOf(t); if (k >= 0) p.interests.splice(k,1); else p.interests.push(t); b.setAttribute('aria-pressed', k < 0); save(); });
+  bindInts();
+  view.querySelector('#addint').onclick = () => { const v = view.querySelector('#newint').value.trim(); if (!v) return; if (!p.interests.includes(v)) p.interests.push(v); save(); VIEWS.profile(); };
+  const r = view.querySelector('#rate');
+  r.oninput = () => { p.rate = +r.value; view.querySelector('#rv').textContent = p.rate; save(); };
+  view.querySelector('#trate').onclick = () => speak('Hi! This is how fast I will talk to you. Is that comfortable?');
+};
+
+/* CHAT: scenario picker */
+VIEWS.chat = () => {
+  view.innerHTML = `${backBtn()}
+  <div class="stack">
+    <div><h2>שיחה עם דמות</h2><p class="muted" style="margin:4px 0 0">בחרו סצנה. הדמות מדברת אליכם בקול, אתם עונים בדיבור או בהקלדה, והתיקונים מופיעים מתחת לכל הודעה.</p></div>
+    <div class="scen">
+      <button class="scn surprise" id="surp"><span class="en">Surprise me</span><span class="muted">סצנה חדשה שנבנית מהתחביבים שלך${P().interests.length ? ': ' + esc(P().interests.slice(0,3).join(', ')) : ''}</span></button>
+      ${SCENARIOS.map((s,i) => `<button class="scn" data-s="${i}"><span class="en">${esc(s.en)}</span><span class="muted">${esc(s.he)}</span></button>`).join('')}
+    </div>
+    <p class="small muted" id="surpst" aria-live="polite"></p>
+  </div>`;
+  bindBack();
+  view.querySelectorAll('[data-s]').forEach(b => b.onclick = () => go('chatRoom', SCENARIOS[+b.dataset.s]));
+  view.querySelector('#surp').onclick = async (e) => {
+    const st = view.querySelector('#surpst'); e.currentTarget.disabled = true; st.textContent = 'ממציאים סצנה...';
+    try {
+      const s = await ask(`Invent ONE fun, slightly surprising role-play scenario for an English learner. ${profileLine(P())} Base it on one of their interests. Reply with only JSON: {"en":"<short catchy English title>","he":"<one-line Hebrew description of the situation and the learner's goal>","role":"<who the AI character is, in English, with a personality quirk>"}`, {modelTier:'quick'});
+      go('chatRoom', s);
+    } catch (err) { st.textContent = errText(err); e.currentTarget.disabled = false; }
+  };
+};
+
+/* CHAT room */
+VIEWS.chatRoom = (scn) => {
+  const p = P();
+  const RULES = `You are an English conversation partner inside a language-learning app for Hebrew-speaking adults. ${profileLine(p)}
+Scene: "${scn.en}" — ${scn.he}. You play: ${scn.role}.
+Stay in character. Keep each reply short (1-3 sentences) with vocabulary right for the learner's level (slightly above it is good). Make it lively and a bit surprising, and always end with a question or a twist that invites an answer.
+For every learner message, also review that message as a kind teacher. Reply with ONLY JSON:
+{"reply":"<your in-character English reply>",
+ "fix":null OR {"corrected":"<the learner's message rewritten correctly, changing as little as possible>","note_he":"<1-2 short friendly sentences in Hebrew explaining the main mistake>"},
+ "better":"<optional: a more natural, native way to say what the learner meant, or empty string>",
+ "words":[{"en":"<useful word or phrase>","he":"<Hebrew>"}],
+ "hint_he":"<a Hebrew hint for what the learner could answer next, including one useful English phrase>"}
+Rules: fix is null when the message is correct or has only tiny issues. If the message was spoken (marked [voice]), ignore capitalization and punctuation. words: 0-2 items worth learning, from your reply or what the learner needed. If the learner writes in Hebrew, answer in character in English and put the English way to say it in "better".`;
+  const turns = [];  // {role, content}
+  let busy = false, voiceUsed = false, autoSpeak = true, ctl = null, count = 0;
+
+  view.innerHTML = `<button class="back" data-back>→ יציאה מהשיחה</button>
+  <div class="row"><div style="flex:1;min-width:0"><h2 class="en">${esc(scn.en)}</h2><p class="muted small" style="margin:2px 0 0">${esc(scn.he)}</p></div>
+    <label class="small row" style="gap:6px"><input type="checkbox" id="auto" checked> הקראה אוטומטית</label></div>
+  <div class="chat" id="chat" aria-live="polite"></div>
+  <div class="composer">
+    <div class="hint" id="hint" hidden></div>
+    <div class="row" style="flex-wrap:nowrap;align-items:flex-end">
+      <button class="icon" id="mic" aria-label="דברו באנגלית">${IC.mic}</button>
+      <textarea id="msg" class="en" dir="ltr" placeholder="Type or speak in English..." rows="2" style="flex:1;min-width:0"></textarea>
+      <button class="btn" id="send" aria-label="שליחה" style="height:44px">${IC.send}</button>
+    </div>
+    <div class="row small muted"><span>${SR && !micBlocked ? 'לחצו על המיקרופון ודברו.' : 'רוצים לדבר? בטלפון לחצו על המיקרופון במקלדת.'}</span><span class="spacer"></span><button class="btn ghost sm" id="hintBtn">רמז</button></div>
+  </div>`;
+  bindBack();
+  const chat = view.querySelector('#chat'), box = view.querySelector('#msg'), send = view.querySelector('#send'), hint = view.querySelector('#hint');
+  view.querySelector('#auto').onchange = e => autoSpeak = e.target.checked;
+  wireMic(view.querySelector('#mic'), box, () => voiceUsed = true);
+  box.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } });
+  send.onclick = submit;
+  let lastHint = '';
+  view.querySelector('#hintBtn').onclick = () => { if (lastHint) { hint.hidden = false; hint.textContent = lastHint; } };
+
+  function addThem(text){
+    const el = document.createElement('div'); el.className = 'msg them';
+    el.innerHTML = `<span class="who">${esc(scn.en)}</span><div class="bub en">${esc(text)}</div>
+      <div class="tools"><button class="icon" data-a="say" aria-label="השמעה">${IC.speak}</button><button class="icon" data-a="slow" aria-label="השמעה לאט" title="לאט"><span class="small">0.7</span></button><button class="icon" data-a="tr" aria-label="תרגום">${IC.tr}</button></div><div class="trans" hidden></div>`;
+    el.querySelector('[data-a=say]').onclick = () => speak(text);
+    el.querySelector('[data-a=slow]').onclick = () => speak(text, true);
+    el.querySelector('[data-a=tr]').onclick = async (e) => {
+      const t = el.querySelector('.trans'); e.currentTarget.disabled = true; t.hidden = false; t.textContent = 'מתרגם...';
+      try { const r = await ask(`Translate to natural Hebrew. Reply with only JSON {"he":"..."}.\n\n${text}`, {modelTier:'quick', cache:true}); t.textContent = r.he; }
+      catch (err) { t.textContent = errText(err); e.currentTarget.disabled = false; }
+    };
+    chat.append(el); el.scrollIntoView({block:'nearest', behavior:'smooth'});
+    if (autoSpeak) speak(text);
+  }
+  function addMe(text){
+    const el = document.createElement('div'); el.className = 'msg me';
+    el.innerHTML = `<span class="who">${esc(p.name)}</span><div class="bub en">${esc(text)}</div><div class="fbslot"></div>`;
+    chat.append(el); el.scrollIntoView({block:'nearest', behavior:'smooth'}); return el.querySelector('.fbslot');
+  }
+  function feedback(slot, r){
+    let h = '';
+    if (r.fix && r.fix.corrected) h += `<div class="fb fix"><span class="tag">תיקון</span><div class="en">${diff(r._orig, r.fix.corrected)}</div><div>${esc(r.fix.note_he)}</div></div>`;
+    else h += `<div class="fb ok"><span class="tag">מצוין, בלי טעויות</span></div>`;
+    if (r.better && r.better.trim() && r.better.trim() !== (r.fix && r.fix.corrected || '').trim()) h += `<div class="fb"><span class="tag">ככה היה אומר דובר אנגלית</span><div class="en">${esc(r.better)}</div></div>`;
+    if (r.words && r.words.length) h += `<div class="fb"><span class="tag">מילים ששווה לאסוף</span>${wordChips(r.words)}</div>`;
+    slot.innerHTML = h; bindWordChips(slot, r.words || []);
+  }
+  async function call(){
+    busy = true; send.disabled = true;
+    const typing = document.createElement('div'); typing.className = 'typing'; typing.textContent = 'כותב/ת...'; chat.append(typing);
+    ctl = new AbortController();
+    try {
+      const r = await ask([{role:'user', content:RULES}, ...turns], {signal:ctl.signal});
+      typing.remove();
+      turns.push({role:'assistant', content:JSON.stringify({reply:r.reply})});
+      return r;
+    } catch (e) { typing.remove(); const m = errText(e); if (m) toast(m); throw e; }
+    finally { busy = false; send.disabled = false; }
+  }
+  async function submit(){
+    const text = box.value.trim(); if (!text || busy) return;
+    const spoken = voiceUsed; voiceUsed = false; box.value = ''; hint.hidden = true;
+    const slot = addMe(text);
+    turns.push({role:'user', content:(spoken ? '[voice] ' : '') + text});
+    try {
+      const r = await call(); r._orig = text;
+      feedback(slot, r); addThem(r.reply); lastHint = r.hint_he || '';
+      count++; p.stats.chats++;
+      gain((r.fix ? 8 : 12) + (spoken ? 5 : 0), spoken ? 'דיבור' : '');
+      if (count === 5) setTimeout(() => toast('5 הודעות! משימת היום הושלמה.'), 900);
+    } catch { turns.pop(); box.value = text; slot.closest('.msg').remove(); }
+  }
+  (async () => {
+    turns.push({role:'user', content:'(Start the scene now with your opening line. fix must be null, better empty.)'});
+    try { const r = await call(); addThem(r.reply); lastHint = r.hint_he || ''; }
+    catch { turns.length = 0; chat.innerHTML = '<p class="note">לא הצלחנו לפתוח את הסצנה. חזרו לבית ונסו שוב.</p>'; }
+  })();
+};
+
+/* WRITE */
+const WRITE_TYPES = [
+  {id:'story', he:'המשך סיפור', en:'continue a short story from an exciting opening line'},
+  {id:'email', he:'מייל אמיתי', en:'write a realistic email (complaint, request, or invitation)'},
+  {id:'opinion', he:'דעה', en:'give and defend an opinion on a fun, debatable question'},
+  {id:'review', he:'ביקורת', en:'write a short review of something (place, show, product)'},
+  {id:'message', he:'הודעה לחבר', en:'write a casual message to an English-speaking friend'}
+];
+VIEWS.write = () => {
+  const p = P(); let task = null, ctl = null;
+  view.innerHTML = `${backBtn()}
+  <div class="stack">
+    <div><h2>סדנת כתיבה</h2><p class="muted" style="margin:4px 0 0">בחרו סוג משימה. Claude יכין נושא לפי מה שמעניין אותך, ואחרי שתכתבו תקבלו ציון, תיקונים וגרסה משודרגת.</p></div>
+    <div class="chips" id="types">${WRITE_TYPES.map((t,i) => `<button class="chip" data-t="${i}" aria-pressed="${i===0}">${t.he}</button>`).join('')}</div>
+    <div><button class="btn" id="gen">תנו לי משימה</button> <span class="small muted" id="gst" aria-live="polite"></span></div>
+    <div id="task"></div>
+  </div>`;
+  bindBack();
+  let type = WRITE_TYPES[0];
+  view.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { type = WRITE_TYPES[+b.dataset.t]; view.querySelectorAll('[data-t]').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+  view.querySelector('#gen').onclick = async (e) => {
+    const g = e.currentTarget, st = view.querySelector('#gst'); g.disabled = true; st.textContent = 'מכין משימה...';
+    try {
+      task = await ask(`Create one writing task for an English learner. ${profileLine(p)} Task type: ${type.en}. Tie it to one of their interests and make it fun or personal. Reply with only JSON: {"title":"<short English title>","prompt_en":"<the task, 1-3 sentences, in English at the learner's level>","prompt_he":"<the same task explained in Hebrew>","min_words":<number, 40-60 for A2, 60-100 for B1, 100-150 for B2/C1>,"useful":[{"en":"<useful phrase for this task>","he":"<Hebrew>"}]} with 3-4 useful items.`, {modelTier:'quick'});
+      st.textContent = ''; showTask();
+    } catch (err) { st.textContent = errText(err); }
+    g.disabled = false; g.textContent = 'משימה אחרת';
+  };
+  function showTask(){
+    const t = view.querySelector('#task');
+    t.innerHTML = `<div class="card stack">
+      <div><h3 class="en">${esc(task.title)}</h3><p class="en prose" style="margin:6px 0">${esc(task.prompt_en)}</p><p class="muted small" style="margin:0">${esc(task.prompt_he)}</p></div>
+      <div><span class="lbl">ביטויים שיעזרו</span>${wordChips(task.useful)}</div>
+      <div><textarea id="txt" class="en" dir="ltr" placeholder="Start writing here..."></textarea>
+      <div class="row small muted" style="margin-top:6px"><button class="icon" id="wmic" aria-label="הכתבה בקול">${IC.mic}</button><span id="cnt">0 / ${task.min_words} מילים</span><span class="spacer"></span><button class="btn" id="chk">בדיקה</button></div></div>
+    </div><div id="res" style="margin-top:14px"></div>`;
+    bindWordChips(t, task.useful);
+    const txt = t.querySelector('#txt'), cnt = t.querySelector('#cnt');
+    const upd = () => cnt.textContent = wc(txt.value) + ' / ' + task.min_words + ' מילים';
+    txt.oninput = upd; wireMic(t.querySelector('#wmic'), txt, upd);
+    try { const d = sessionStorage.getItem('e42_draft_'+S.cur); if (d) { txt.value = d; upd(); } } catch {}
+    txt.addEventListener('input', () => { try { sessionStorage.setItem('e42_draft_'+S.cur, txt.value); } catch {} });
+    t.querySelector('#chk').onclick = async (e) => {
+      const btn = e.currentTarget, res = t.querySelector('#res'), text = txt.value.trim();
+      if (wc(text) < 8) { toast('כתבו קצת יותר לפני הבדיקה.'); return; }
+      btn.disabled = true; res.innerHTML = '<p class="typing">Claude קורא/ת את הטקסט...</p>';
+      try {
+        const r = await ask(`You are a warm, precise English writing coach for a Hebrew-speaking adult. ${profileLine(p)}
+Task given: ${task.prompt_en}
+Learner's text:
+"""${text}"""
+Reply with only JSON:
+{"scores":{"grammar":<1-10>,"vocabulary":<1-10>,"clarity":<1-10>},"overall":<1-10>,
+ "praise_he":"<one specific compliment in Hebrew>",
+ "corrected":"<the full text with only errors fixed, keep their voice>",
+ "mistakes":[{"wrong":"<exact wrong fragment>","right":"<fix>","why_he":"<short Hebrew explanation>"}],
+ "upgrade":"<the same text rewritten by a skilled native writer, one level above the learner, similar length>",
+ "tip_he":"<the single most useful thing to practice next, in Hebrew>",
+ "words":[{"en":"<word/phrase from the upgrade worth learning>","he":"<Hebrew>"}]}
+Max 6 mistakes (most important first), 3-4 words. Score fairly for the learner's level.`, {modelTier:'default'});
+        renderReview(res, text, r);
+        p.stats.writes++; gain(10 + Math.round(r.overall * 3) + (wc(text) >= task.min_words ? 10 : 0), 'כתיבה');
+        try { sessionStorage.removeItem('e42_draft_'+S.cur); } catch {}
+      } catch (err) { res.innerHTML = `<p class="note">${esc(errText(err))}</p>`; }
+      btn.disabled = false;
+    };
+  }
+};
+function renderReview(res, text, r){
+  const s = r.scores || {};
+  res.innerHTML = `<div class="stack">
+    <div class="scores"><div class="score main"><b>${esc(r.overall)}</b><span>ציון כללי</span></div><div class="score"><b>${esc(s.grammar)}</b><span>דקדוק</span></div><div class="score"><b>${esc(s.vocabulary)}</b><span>אוצר מילים</span></div><div class="score"><b>${esc(s.clarity)}</b><span>בהירות</span></div></div>
+    <p style="margin:0">${esc(r.praise_he)}</p>
+    <div class="card"><span class="lbl">הטקסט שלך, עם תיקונים</span><div class="en prose">${diff(text, r.corrected || text)}</div></div>
+    ${r.mistakes && r.mistakes.length ? `<div class="mist"><span class="lbl">הטעויות העיקריות</span><ul>${r.mistakes.map(m => `<li><span class="en"><del>${esc(m.wrong)}</del> → <ins>${esc(m.right)}</ins></span><div class="small">${esc(m.why_he)}</div></li>`).join('')}</ul></div>` : ''}
+    <div class="card"><div class="row"><span class="lbl" style="flex:1">גרסה משודרגת</span><button class="icon" id="sayUp" aria-label="השמעה">${IC.speak}</button></div><div class="en prose">${esc(r.upgrade)}</div></div>
+    <div class="fb"><span class="tag">לתרגל הבא</span>${esc(r.tip_he)}</div>
+    ${r.words && r.words.length ? `<div><span class="lbl">מילים מהגרסה המשודרגת</span>${wordChips(r.words)}</div>` : ''}
+  </div>`;
+  bindWordChips(res, r.words || []);
+  const su = res.querySelector('#sayUp'); if (su) su.onclick = () => speak(r.upgrade);
+}
+
+/* DUEL */
+VIEWS.duel = () => {
+  const A = S.players.p1, B = S.players.p2;
+  let ch = null; const ans = {p1:'', p2:''};
+  view.innerHTML = `${backBtn()}
+  <div class="stack">
+    <div class="vs"><div><span class="dot p1c" style="display:inline-block"></span> <b>${esc(A.name)}</b><div class="small muted">${A.level}</div></div><span class="big">VS</span><div><span class="dot p2c" style="display:inline-block"></span> <b>${esc(B.name)}</b><div class="small muted">${B.level}</div></div></div>
+    <p class="muted" style="margin:0;text-align:center">אתגר אחד, שתי תשובות. כל אחד כותב (או מקליט) בלי שהשני מציץ, ו-Claude שופט לפי הרמה של כל אחד.</p>
+    <div class="row" style="justify-content:center"><button class="btn" id="dgen">אתגר חדש</button></div>
+    <div id="duel" aria-live="polite"></div>
+  </div>`;
+  bindBack();
+  const box = view.querySelector('#duel');
+  view.querySelector('#dgen').onclick = async (e) => {
+    const g = e.currentTarget; g.disabled = true; box.innerHTML = '<p class="typing" style="text-align:center">מכין אתגר...</p>';
+    try {
+      ch = await ask(`Create one fun, short English challenge for a married couple of Hebrew speakers to compete on. Player A: ${A.level}, interests ${A.interests.join(', ')||'general'}. Player B: ${B.level}, interests ${B.interests.join(', ')||'general'}. Pick something playful that both can answer in 2-5 sentences (e.g. convince me, describe without saying the word, invent an excuse, sell a weird product, explain a Hebrew idiom to a tourist). Reply with only JSON: {"title":"<English title>","challenge_en":"<the challenge in English>","challenge_he":"<Hebrew explanation>"}`, {modelTier:'quick'});
+      ans.p1 = ans.p2 = ''; turn('p1');
+    } catch (err) { box.innerHTML = `<p class="note">${esc(errText(err))}</p>`; }
+    g.disabled = false;
+  };
+  function head(){ return `<div class="card" style="margin-bottom:12px"><h3 class="en">${esc(ch.title)}</h3><p class="en prose" style="margin:6px 0">${esc(ch.challenge_en)}</p><p class="small muted" style="margin:0">${esc(ch.challenge_he)}</p></div>`; }
+  function turn(id){
+    const pl = S.players[id];
+    box.innerHTML = head() + `<div class="card stack"><div class="row"><span class="dot ${id}c"></span><b>התור של ${esc(pl.name)}</b><span class="small muted">${id==='p1' ? '(' + esc(B.name) + ', לא להציץ)' : ''}</span></div>
+      <textarea id="dans" class="en" dir="ltr" placeholder="Your answer..."></textarea>
+      <div class="row"><button class="icon" id="dmic" aria-label="דברו באנגלית">${IC.mic}</button><span class="spacer"></span><button class="btn ${id==='p2'?'teal':''}" id="dok">${id==='p1' ? 'סיימתי, תעבירו את הטלפון' : 'לשיפוט!'}</button></div></div>`;
+    const ta = box.querySelector('#dans'); wireMic(box.querySelector('#dmic'), ta); ta.focus();
+    box.querySelector('#dok').onclick = () => {
+      if (wc(ta.value) < 3) { toast('קצת יותר מזה, בבקשה.'); return; }
+      ans[id] = ta.value.trim();
+      if (id === 'p1') { box.innerHTML = head() + `<div class="card" style="text-align:center"><p>התשובה של ${esc(A.name)} נשמרה ומוסתרת.</p><button class="btn teal" id="ready">${esc(B.name)}, מוכנ/ה?</button></div>`; box.querySelector('#ready').onclick = () => turn('p2'); }
+      else judge();
+    };
+  }
+  async function judge(){
+    box.innerHTML = head() + '<p class="typing" style="text-align:center">השופט/ת שוקל/ת...</p>';
+    try {
+      const r = await ask(`You are a witty, fair judge in an English-learning duel between a married couple (Hebrew speakers). Judge each relative to their own CEFR level: creativity, how well they met the challenge, and English quality. Be playful, never mean.
+Challenge: ${ch.challenge_en}
+Player A (${A.name}, ${A.level}): """${ans.p1}"""
+Player B (${B.name}, ${B.level}): """${ans.p2}"""
+Reply with only JSON: {"winner":"A"|"B"|"tie","commentary_he":"<2-3 fun sentences in Hebrew announcing the result and why>","A":{"score":<1-10>,"corrected":"<A's answer with errors fixed>","tip_he":"<one tip in Hebrew>","best":"<A's best phrase, quoted>"},"B":{same for B},"words":[{"en":"","he":""}]} with 2-3 words both could learn.`, {modelTier:'default'});
+      const win = r.winner === 'A' ? 'p1' : r.winner === 'B' ? 'p2' : null;
+      box.innerHTML = head() + `<div class="stack"><div class="card" style="text-align:center"><h3>${win ? 'הניצחון של ' + esc(S.players[win].name) + '!' : 'תיקו!'}</h3><p style="margin:8px 0 0">${esc(r.commentary_he)}</p></div>
+        <div class="duelcol">${['p1','p2'].map(id => { const k = id==='p1'?'A':'B', x = r[k] || {}; return `<div class="card stack ${win===id?'winner':''}"><div class="row"><span class="dot ${id}c"></span><b>${esc(S.players[id].name)}</b><span class="spacer"></span><b style="font-family:var(--f-display);font-size:1.4rem">${esc(x.score)}/10</b></div><div class="en">${diff(ans[id], x.corrected || ans[id])}</div>${x.best ? `<div class="small">הכי טוב: <span class="en">${esc(x.best)}</span></div>` : ''}<div class="fb">${esc(x.tip_he)}</div></div>`; }).join('')}</div>
+        ${r.words && r.words.length ? `<div><span class="lbl">מילים לשניכם (נוספות למחסן של ${esc(P().name)})</span>${wordChips(r.words)}</div>` : ''}
+        <div class="row" style="justify-content:center"><button class="btn" id="again">עוד סיבוב</button></div></div>`;
+      bindWordChips(box, r.words || []);
+      box.querySelector('#again').onclick = () => view.querySelector('#dgen').click();
+      for (const id of ['p1','p2']) {
+        const q = S.players[id], pts = win === id ? 50 : win ? 20 : 35, d = today();
+        if (q.lastDay !== d) { q.streak = q.lastDay === d - 1 ? q.streak + 1 : 1; q.lastDay = d; }
+        q.xp += pts; q.stats.duels++; save(id);
+      }
+      renderTop(); toast(win ? `+50 XP ל${S.players[win].name}, +20 XP ל${S.players[win==='p1'?'p2':'p1'].name}` : '+35 XP לכל אחד');
+    } catch (err) { box.innerHTML = head() + `<p class="note">${esc(errText(err))}</p><div class="row" style="justify-content:center"><button class="btn" id="rj">לשפוט שוב</button></div>`; box.querySelector('#rj').onclick = judge; }
+  }
+};
+
+/* WORDS */
+VIEWS.words = () => {
+  const p = P();
+  const due = p.words.filter(w => w.due <= today()).sort((a,b) => a.box - b.box);
+  view.innerHTML = `${backBtn()}
+  <div class="stack">
+    <div><h2>מחסן המילים</h2><p class="muted" style="margin:4px 0 0">חזרה מרווחת: מילה שידעת חוזרת אחרי יום, 3 ימים, שבוע וכן הלאה. מילה ששכחת חוזרת להתחלה.</p></div>
+    <div id="rev"></div>
+    <details class="card"><summary>הוספת מילה ידנית</summary>
+      <div class="stack" style="margin-top:10px"><input type="text" id="wen" class="en" dir="ltr" placeholder="English word or phrase"><input type="text" id="whe" placeholder="תרגום"><button class="btn sm" id="wadd" style="justify-self:start">הוספה</button></div></details>
+    <div><h3 style="margin-bottom:8px">כל המילים (${p.words.length})</h3>
+      ${p.words.length ? `<ul class="wordlist">${p.words.slice().reverse().map(w => `<li><button class="icon" data-say="${esc(w.en)}" aria-label="השמעה">${IC.speak}</button><span class="en">${esc(w.en)}</span><span class="muted">${esc(w.he)}</span><span class="spacer"></span><span class="box">שלב ${w.box}/6</span></li>`).join('')}</ul>` : '<p class="note">עדיין ריק. בשיחות ובכתיבה לחצו על מילה עם + כדי להוסיף אותה לכאן.</p>'}
+    </div>
+  </div>`;
+  bindBack();
+  view.querySelectorAll('[data-say]').forEach(b => b.onclick = () => speak(b.dataset.say));
+  view.querySelector('#wadd').onclick = () => { const en = view.querySelector('#wen').value.trim(); if (!en) return; addWord({en, he:view.querySelector('#whe').value}); VIEWS.words(); };
+  const rev = view.querySelector('#rev');
+  let i = 0;
+  function card(){
+    if (!due.length) { rev.innerHTML = `<div class="card flash"><div><h3>אין מילים לחזרה היום</h3><p class="muted">${p.words.length ? 'כל הכבוד. חזרו מחר.' : 'אספו מילים בשיחה או בכתיבה.'}</p></div></div>`; return; }
+    if (i >= due.length) { rev.innerHTML = `<div class="card flash"><div><h3>סיימת את החזרה של היום</h3><p class="muted">${due.length} מילים עברו חזרה.</p></div></div>`; return; }
+    const w = due[i];
+    rev.innerHTML = `<div class="card flash"><div class="small muted">${i+1} מתוך ${due.length}</div><div class="w en" style="text-align:center">${esc(w.en)}</div>
+      <div class="row" style="justify-content:center"><button class="icon" id="fs" aria-label="השמעה">${IC.speak}</button><button class="btn ghost" id="show">מה זה אומר?</button></div><div id="ans" hidden><p style="font-size:1.25rem;margin:4px 0">${esc(w.he || '—')}</p>${w.ex ? `<p class="en muted">${esc(w.ex)}</p>` : ''}
+      <div class="row" style="justify-content:center"><button class="btn ghost" id="no">עוד לא</button><button class="btn teal" id="yes">ידעתי</button></div></div></div>`;
+    rev.querySelector('#fs').onclick = () => speak(w.en);
+    rev.querySelector('#show').onclick = (e) => { e.currentTarget.hidden = true; rev.querySelector('#ans').hidden = false; speak(w.en); };
+    rev.querySelector('#yes').onclick = () => { w.box = Math.min(6, w.box + 1); w.due = today() + BOX_DAYS[w.box]; p.stats.cards++; save(); gain(3); i++; card(); };
+    rev.querySelector('#no').onclick = () => { w.box = 0; w.due = today(); save(); due.push(due.splice(i,1)[0]); if (due.indexOf(w) === i) i++; card(); };
+  }
+  card();
+};
+
+/* ---------- boot ---------- */
+renderTop(); go('home');
+(async () => {
+  if (!window.claude || !window.claude.use) return;
+  const [db, sample] = await Promise.all([claude.use('db').catch(() => null), claude.use('sample').catch(() => null)]);
+  S.sample = sample;
+  if (db) {
+    S.db = db;
+    for (const id of ['p1','p2']) {
+      db.doc('players/'+id).onSnapshot(snap => {
+        if (S.dirty[id] || !snap.exists) { if (!snap.exists && S.players[id].updatedAt) flush(id); return; }
+        const d = snap.data();
+        if ((d.updatedAt || 0) >= (S.players[id].updatedAt || 0)) {
+          S.players[id] = merge(id, JSON.parse(JSON.stringify(d)));
+          try { localStorage.setItem('e42_'+id, JSON.stringify(S.players[id])); } catch {}
+          renderTop(); if (S.view === 'home') VIEWS.home();
+        }
+      }, () => {});
+    }
+  }
+  if (S.view === 'home') VIEWS.home();
+})();
+})();
+</script>
