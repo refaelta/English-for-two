@@ -1,0 +1,15 @@
+{
+  "name": "English for Two",
+  "short_name": "English 2",
+  "description": "תרגול אנגלית אינטראקטיבי לשניים, בדיבור ובכתיבה",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F6FB",
+  "theme_color": "#3050E0",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
